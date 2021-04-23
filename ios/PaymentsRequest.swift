@@ -16,7 +16,9 @@ internal struct PaymentsData {
     static var returnUrl: String = "ui-host://"
     static var shopperReference: String = ""
     static var shopperEmail: String = ""
+    static var userAgent: String = ""
     static var merchantAccount : String = ""
+    static var allowedPaymentMethods : [String] = [String]()
     static var additionalData : [String : Any] = ["allow3DS2": true,"executeThreeD":true]
 }
 
@@ -38,17 +40,24 @@ internal struct PaymentsRequest: Request {
             "value": PaymentsData.amount.value
         ]
         
+        let browserInfo: [String: Any] = [
+            "userAgent": PaymentsData.userAgent,
+        ]
+        
         try container.encode(data.paymentMethod.encodable, forKey: .details)
         try container.encode(data.storePaymentMethod, forKey: .storePaymentMethod)
+//        try container.encodeIfPresent(data.browserInfo, forKey: .browserInfo)
         try container.encode("iOS", forKey: .channel)
         try container.encode(amount, forKey: .amount)
         try container.encode(PaymentsData.reference, forKey: .reference)
+        try container.encode(browserInfo, forKey: .browserInfo)
         try container.encode(PaymentsData.countryCode, forKey: .countryCode)
         try container.encode(PaymentsData.returnUrl, forKey: .returnUrl)
         try container.encode(PaymentsData.shopperReference, forKey: .shopperReference)
         try container.encode(PaymentsData.shopperEmail, forKey: .shopperEmail)
         try container.encode(PaymentsData.shopperLocale, forKey: .shopperLocale)
         try container.encode(PaymentsData.additionalData, forKey: .additionalData)
+        try container.encode(PaymentsData.merchantAccount, forKey: .merchantAccount)
     }
     
     private enum CodingKeys: String, CodingKey {
@@ -64,6 +73,7 @@ internal struct PaymentsRequest: Request {
         case shopperLocale
         case additionalData
         case merchantAccount
+        case browserInfo
     }
     
 }
@@ -100,6 +110,7 @@ internal struct PaymentsResponse: Response {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         self.resultCode = try container.decodeIfPresent(ResultCode.self, forKey: .resultCode)
         self.action = try container.decodeIfPresent(Action.self, forKey: .action)
+
         self.pspReference = try container.decodeIfPresent(String.self,forKey: .pspReference)
         self.additionalData = try container.decodeIfPresent([String: Any].self,forKey: .additionalData)
         self.merchantReference = try container.decodeIfPresent(String.self, forKey: .merchantReference)
@@ -186,7 +197,4 @@ internal extension PaymentsResponse {
         case identifyShopper = "IdentifyShopper"
         case challengeShopper = "ChallengeShopper"
     }
-    
-    
-    
 }
